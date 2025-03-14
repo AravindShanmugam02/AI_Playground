@@ -10,6 +10,8 @@ public class CustomGridLayout : MonoBehaviour
     [Header("Ground Properties")]
     [SerializeField]
     private Transform groundTransform;
+    [SerializeField]
+    private MeshCollider groundMeshCollider;
 
     // What poperties does a gridLayout have in general?
     // - CustomGridLayout Size in length and breadth. Should be (X,Z) in 3D world [Total size of the gridLayout in the world.]
@@ -53,10 +55,13 @@ public class CustomGridLayout : MonoBehaviour
     {
         // Get Plane transform
         groundTransform = GetComponent<Transform>();
+        // Get Plane Mesh Collider
+        groundMeshCollider = groundTransform?.GetComponent<MeshCollider>();
 
-        // Assign the scale size of the plane to the gridLayoutSizeXZ Vector2 variable, so that it is in the same size as the plane.
-        gridLayoutSizeXZ.x = groundTransform.localScale.x;
-        gridLayoutSizeXZ.y = groundTransform.localScale.z;
+        // Giving initial size value for the gridLayout. Instead of scale size, I am using meshcollider.size to get the actual size of the scaled plane ground, and assign that as the gridLayout size.
+        // Since, this is a mesh collider and not any primitive collider, I had the option to use meshcollider.size directly, which in turn represents the actual size of the scaled plane primitive.
+        gridLayoutSizeXZ.x = groundMeshCollider.bounds.size.x;
+        gridLayoutSizeXZ.y = groundMeshCollider.bounds.size.z;
 
         // Giving an initial value for grid height
         gridLayoutSizeY = 0.15f;
@@ -64,8 +69,9 @@ public class CustomGridLayout : MonoBehaviour
         // Giving an initial diameter for nodes by multiplying radius with 2. And Radus is 0.5f by default.
         nodeDiameter = nodeRadius * 2;
 
+        // Dividing by a single node size (here, diameter) would give us the number of nodes that can fit into the grid size in that respective axis.
         // Rounding up the float gridLayout size value to the nearest Int value.
-        noOfNodesInXAxis = Mathf.RoundToInt(gridLayoutSizeXZ.x/nodeDiameter); // Dividing by a single node size (here, diameter) would give us the number of nodes that can fit into the grid size in that respective axis.
+        noOfNodesInXAxis = Mathf.RoundToInt(gridLayoutSizeXZ.x/nodeDiameter);
         noOfNodesInZAxis = Mathf.RoundToInt(gridLayoutSizeXZ.y/nodeDiameter); // Note: Since this is a Vector2 I'm doing gridLayoutSizeXZ.y
     }
 
@@ -80,7 +86,42 @@ public class CustomGridLayout : MonoBehaviour
     {
         if(Application.IsPlaying(this))
         {
-            Gizmos.DrawWireCube(groundTransform.position, new Vector3((gridLayoutSizeXZ.x / 2.5f) * groundTransform.lossyScale.x, gridLayoutSizeY, (gridLayoutSizeXZ.y / 2.5f) * groundTransform.lossyScale.z)); // Dunno why dividing by 2.5f and multiplaying by lossyScale gives the correct size as the ground plane.
+            #region REALISATION OF I DID A MISTAKE IN CALCULATING THE SIZE OF THE GIZMO WIRED CUBE
+            // I was making a mistake here by thinking scale is the size of an object.
+            // But actually size/dimension is different from scale.
+            // When you scale an object, it is just scale times the actual size.
+            // Example a dimension of a primitive object is V3(2,5,6) and I scale it from Scale V3(1,1,1) to Scale V3(2,2,2) and what happens is the Scaled value of V3(2,2,2)
+            // is multiplied with dimention V3(2,5,6) and the dimension becomes new dimension V3(4,10,12). But what we see in the inspector is Scaled value of V3(2,2,2) and it should not be confused with the size of the object.
+            // So, when we try to match the size of an object with the scaled value of another object, it will be wrong. That is why, randomly I tried dividing gridLayoutSizeXZ by 2,3,4, and then 2.5f and
+            // it worked and the gizmo wired cube became the same size as the scaled plane.
+
+            // https://discussions.unity.com/t/understanding-dimension-size-vs-scale/813678/2
+            // Unity uses “Unity units” for distance. Though 1 unit = 1 meter is common, and a few settings which depend on that are set to it as default, you’re in no way required to keep to 1 unit = 1 meter.
+            // But on the actual question, you’re thinking about this wrong.Scale doesn’t tell you how large a model’s size is.It is a multiple of that size(on each specific dimension individually),
+            // regardless of what it actually is.So you have a model that is 10x7x27 and the scale is set to 1,1,1, it will actually appear as 10x7x27 in the scene. You change the scale to 2,1,2 and
+            // it will appear as 20x7x54 in the scene.
+            // The cube primitive just happens to have dimensions of 1x1x1, so coincidentally whatever multiple you set for scale is the actual size in units(1 x anything == anything),
+            // but that is only the case for the cube.
+
+            // https://discussions.unity.com/t/setting-the-actual-size-of-an-object/894991/2
+            // Scale is how large an object is compared its ‘normal’ size. A scale of 1, 1, 1, means an object is true its normal size. But its true size can be anything.
+            // It can be a cube with a volume of 1m3 in real terms, or it can be a flat plane with an area of 50km2.
+            // If you want objects to be a consistent size, you need to make sure that they are. Most 3d programs like Blender will be able to tell you an objects dimensions regardless of its scale.
+            // You also need to make sure they’re exported properly too. This generally means making sure they’re exported with a scale of 1, 1, 1, and
+            // usually with zero rotation and zero position too. This isn’t a feature of Unity as it’s somewhat outside its domain.
+            // Typically these built in primitives are only really used for some quick and dirty prototyping.You rarely use them otherwise, so don’t get hung up on them.
+            // Typically you create your models in an external modeling program and import them into Unity.If they were scaled incorrectly in the external program,
+            // you can then adjust their scale in Unity with the scale setting you are already playing with.But since scale also stretches their textures, you usually want to keep
+            // to a uniform scale when possible instead of using scale to stretch them into different shapes.
+
+            // Here, they use collider's radius. Because collider stays the same size as the object even it becomes big or small.
+            // The collider too gets that size. Hence I should also be using collider rather than Scale value of the plane.
+
+            // https://discussions.unity.com/t/keep-gizmos-the-same-with-the-object-scale/173367
+            // Replace Gizmos.DrawSphere(sphereCollider.bounds.center, sphereCollider.radius) with Gizmos.DrawSphere(sphereCollider.bounds.center, sphereCollider.radius * transform.lossyScale.x)
+            #endregion
+
+            Gizmos.DrawWireCube(groundTransform.position, new Vector3(gridLayoutSizeXZ.x, gridLayoutSizeY, gridLayoutSizeXZ.y));
         }
     }
 
