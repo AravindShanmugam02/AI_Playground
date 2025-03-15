@@ -31,8 +31,7 @@ public class CustomGridLayout : MonoBehaviour
 
     // Keeping it as a Range as we are going to adjust it dynamically for visualisation
     [Range(0.0f, 1.0f)]
-    [SerializeField]
-    public float gridLayoutSizeY;
+    public float gridLayoutSizeY; // Doesn't need [SerializeField] because it is a public variable. According to Unity library, if a variable is public, it will be displayed on the inspector by default.
 
     // To hold all the nodes generated based on how many nodes can fit in to the current gridLayout layout size
     Node[,] gridLayout;
@@ -44,7 +43,6 @@ public class CustomGridLayout : MonoBehaviour
     [Header("Node Properties")]
     // Keeping node radius to be adjusted dynamically for movement accuracy
     [Range(0.5f, 3f)]
-    [SerializeField]
     public float nodeRadius;
 
     // Diameter would be just radius*2
