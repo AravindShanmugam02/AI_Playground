@@ -37,10 +37,16 @@ public class CustomGridLayout : MonoBehaviour
     // To hold all the nodes generated based on how many nodes can fit in to the current gridLayout layout size
     Node[,] gridLayout;
 
+    // [DEBUG PURPOSE]
+    [SerializeField]
+    Vector3 topLeftCornerPosition;
+
+    [Header("Node Properties")]
     // Keeping node radius to be adjusted dynamically for movement accuracy
     [Range(0.5f, 3f)]
     [SerializeField]
     public float nodeRadius;
+
     // Diameter would be just radius*2
     [SerializeField]
     float nodeDiameter;
@@ -50,6 +56,11 @@ public class CustomGridLayout : MonoBehaviour
     int noOfNodesInXAxis;
     [SerializeField]
     int noOfNodesInZAxis;
+
+    [Header("Reference Variables")] // Just to use it for condition checking
+    // LayerMask to store the Obstacle layer from inspector
+    [SerializeField]
+    private LayerMask obstacleLayer;
 
     void Awake()
     {
@@ -80,10 +91,50 @@ public class CustomGridLayout : MonoBehaviour
     {
         // Initialise the gridLayout 2D array with the number of nodes that can fit-in in each axis.
         gridLayout = new Node[noOfNodesInXAxis, noOfNodesInZAxis];
+
+        // Now we are going to initialise the nodes and place them in the gridLayout 2D array.
+        // Q.We need to know the position of the nodes. So, how do we know each node's position?
+        // A.Maybe try dividing the whole plane into multiple segments until we reach the any corner of the grid. From there we can calculate each node's position.
+        // Lets, choose topleft corner. In tutorial video they choose bottom left.
+
+        // A grid's left most point's position = centre of plane - (radius of plane converted to Vector3 using Vector3.right since it is a radius in x axis);
+        Vector3 positionOfLeftMostPointOfGrid = groundTransform.position - (Vector3.right * gridLayoutSizeXZ.x / 2);
+
+        // left most point position + radius of plane in z axis converted to Vector3 using Vector3.forward. Vector3.forward since it is a radius along z axis.
+        topLeftCornerPosition = positionOfLeftMostPointOfGrid + (Vector3.forward * gridLayoutSizeXZ.y / 2); // + because z axis upwards is positve and downwards is negative.
+
+        // In my map, topLeftCornerPosition would be the position of [0,0] node.
+
+        // rows
+        for (int x = 0; x < noOfNodesInXAxis; x++)
+        {
+            // coloumns
+            for (int z = 0; z < noOfNodesInZAxis; z++)
+            {
+                // To create a node we need to know the centre position of the node. As of now we have the position of top left most point of the grid. So, every node has a radius and diameter.
+                // To go to the next from from previous node through position, just use diameter.
+                // To get the centre of the node use radius.
+
+                // Since I am starting from lopleft corner, I got to subtract nodeRadius from topLeftCornerPosition.x
+                //Vector3 centrePointOfNode = new Vector3(topLeftCornerPosition.x - nodeRadius, topLeftCornerPosition.y, topLeftCornerPosition.z + nodeRadius);
+                // But this above stupid equation only works for [0,0] node. How do I make it useable for all the nodes upto [n,m]? Solution: below equation.
+                Vector3 centrePointOfNode = topLeftCornerPosition + Vector3.right * (x * nodeDiameter + nodeRadius) - Vector3.forward * (z * nodeDiameter + nodeRadius);
+
+                // To create a node we also need to check if the node is obstacleLayer, where there is no objects.
+                // We could use the same logic we did for farming lands in Monocrop Madness by checking sphere collision with the size of radius from the centre of the node.
+                // Here we are using additional layermask to only check collision against those objects with Obstacle Layer mask.
+                // If Obstacle object is found in sphere collision check, that node is untraversable.
+                bool isTraversable = !(Physics.CheckSphere(centrePointOfNode, nodeRadius, obstacleLayer));
+
+                // Creating Node
+                gridLayout[x, z] = new Node(isTraversable, centrePointOfNode);
+            }
+        }
     }
 
     void OnDrawGizmos()
     {
+        // Will make sure to draw only when this object is in the play mode.
         if(Application.IsPlaying(this))
         {
             #region REALISATION OF I DID A MISTAKE IN CALCULATING THE SIZE OF THE GIZMO WIRED CUBE
@@ -121,7 +172,19 @@ public class CustomGridLayout : MonoBehaviour
             // Replace Gizmos.DrawSphere(sphereCollider.bounds.center, sphereCollider.radius) with Gizmos.DrawSphere(sphereCollider.bounds.center, sphereCollider.radius * transform.lossyScale.x)
             #endregion
 
+            // Draw the grid layout using wire cube
             Gizmos.DrawWireCube(groundTransform.position, new Vector3(gridLayoutSizeXZ.x, gridLayoutSizeY, gridLayoutSizeXZ.y));
+
+            // Draw the nodes within the grid layout
+            if(gridLayout != null)
+            {
+                foreach(Node n in gridLayout)
+                {
+                    if (!n.IsTraversable) Gizmos.color = Color.red;
+                    else Gizmos.color = Color.green;
+                    Gizmos.DrawCube(n.PosInWorld, Vector3.one * (nodeDiameter - 0.2f)); // - 0.2 to make the grids visible and clear by being seperate from each other.
+                }
+            }
         }
     }
 
