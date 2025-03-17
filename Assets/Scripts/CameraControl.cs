@@ -18,37 +18,6 @@ public class CameraControl : MonoBehaviour
     private Vector3 cameraCurrentVelocity;
 
     #region To Write [TODO]
-    // How to make the cameraTransform readonly when it is being sent as reference/object to other classes?
-    // Answer is to think for C# solution and I found one called readonly struct.
-    // In short, a readonly struct doesn't allow for modification to it's members except for one time when the members are initialised by the constructor of readonly struct.
-    public readonly struct CameraTransformStruct
-    {
-        public CameraTransformStruct(Transform t) => CameraTransform = t;
-
-        // Using Shorthand Syntax for varibale properties in C# automatically creates a private field implicitly.
-        /* Sample Code Snippet
-            Automatic Properties (Short Syntax)
-            C# allows shorthand syntax for properties with implicit backing fields.
-
-                            public string FirstName { get; set; } // Automatically creates a private field
-
-            Equivalent to:
-                            private string firstName;
-                            public string FirstName
-                            {
-                                get { return firstName; }
-                                set { firstName = value; }
-                            }
-         */
-        public Transform CameraTransform { get; }
-    }
-
-    // Making the below two as static because I need to access the GetCameraTransformStruct() from CursorControl class without having to create an instance of CameraControl there.
-    private static CameraTransformStruct cameraTransformStruct; // This should be private
-    public static CameraTransformStruct GetCameraTransformStruct() => cameraTransformStruct; // returns immutable struct.
-    #endregion
-
-    #region To Write [TODO]
     //private Transform cameraTransform;
     //void SetCameraTransform(Transform c) { cameraTransform = c; }
 
@@ -144,18 +113,53 @@ public class CameraControl : MonoBehaviour
     //}
     #endregion
 
+    #region To Write [TODO]
+    //// How to make the cameraTransform readonly when it is being sent as reference/object to other classes?
+    //// Answer is to think for C# solution and I found one called readonly struct.
+    //// In short, a readonly struct doesn't allow for modification to it's members except for one time when the members are initialised by the constructor of readonly struct.
+    //public readonly struct CameraTransformStruct
+    //{
+    //    public CameraTransformStruct(Transform t) => CameraTransform = t;
+
+    //    // Using Shorthand Syntax for varibale properties in C# automatically creates a private field implicitly.
+    //    /* Sample Code Snippet
+    //        Automatic Properties (Short Syntax)
+    //        C# allows shorthand syntax for properties with implicit backing fields.
+
+    //                        public string FirstName { get; set; } // Automatically creates a private field
+
+    //        Equivalent to:
+    //                        private string firstName;
+    //                        public string FirstName
+    //                        {
+    //                            get { return firstName; }
+    //                            set { firstName = value; }
+    //                        }
+    //     */
+    //    public Transform CameraTransform { get; }
+    //}
+
+    //// Making the below two as static because I need to access the GetCameraTransformStruct() from CursorControl class without having to create an instance of CameraControl there.
+    //private static CameraTransformStruct cameraTransformStruct; // This should be private
+    //public static CameraTransformStruct GetCameraTransformStruct() => cameraTransformStruct; // returns immutable struct.
+    #endregion
+
+    #region To Write [TODO]
+    private static Vector3 CameraTransformForward { get; set; }
+    public static Vector3 GetCameraTransformForward() => new Vector3(CameraTransformForward.x, CameraTransformForward.y, CameraTransformForward.z);
+    #endregion
+
     void Awake()
     {
-        cameraTransformStruct = new CameraTransformStruct(GetComponent<Transform>());
-
         // Directly using transform as this script is assigned to Main Camera
+        CameraTransformForward = transform.forward;
         transform.eulerAngles = Vector3.zero;
     }
 
     // Start is called once before the first execution of Update after the MonoBehaviour is created
     void Start()
     {
-        cameraMovementSpeed = 5.0f;
+        cameraMovementSpeed = 15.0f;
         cameraMovementSmoothness = 1.0f;
         cameraRotationSpeed = 5.0f;
         cameraRotationSmoothness = 1.0f;
@@ -199,6 +203,9 @@ public class CameraControl : MonoBehaviour
 
         // Rotating Camera --> Both Lerp and SmoothDamp works. Even Slerp Works. It is just the way they smooth the movement or rotation differs.
         transform.eulerAngles = Vector3.SmoothDamp(transform.rotation.eulerAngles, cameraNewRotationValue, ref cameraCurrentVelocity, cameraRotationSmoothness * Time.deltaTime);
+
+        // Seeting the Main Camera's forward direction to CameraTransformForward every frame.
+        CameraTransformForward = transform.forward;
     }
 
     void CameraMovement()

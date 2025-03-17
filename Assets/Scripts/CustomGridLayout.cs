@@ -180,19 +180,49 @@ public class CustomGridLayout : MonoBehaviour
                 // To get the centre of the node use radius.
 
                 // Since I am starting from lopleft corner, I got to subtract nodeRadius from topLeftCornerPosition.x
-                //Vector3 centrePointOfNode = new Vector3(topLeftCornerPosition.x - nodeRadius, topLeftCornerPosition.y, topLeftCornerPosition.z + nodeRadius);
+                //Vector3 worldPositionOfNode = new Vector3(topLeftCornerPosition.x - nodeRadius, topLeftCornerPosition.y, topLeftCornerPosition.z + nodeRadius);
                 // But this above stupid equation only works for [0,0] node. How do I make it useable for all the nodes upto [n,m]? Solution: below equation.
-                Vector3 centrePointOfNode = topLeftCornerPosition + Vector3.right * (x * nodeDiameter + nodeRadius) - Vector3.forward * (z * nodeDiameter + nodeRadius); // This is also how we get a node's position on the world.
+                Vector3 worldPositionOfNode = topLeftCornerPosition + Vector3.right * (x * nodeDiameter + nodeRadius) - Vector3.forward * (z * nodeDiameter + nodeRadius); // This is also how we calculate a node's position on the world.
 
                 // To create a node we also need to check if the node is obstacleLayer, where there is no objects.
                 // We could use the same logic we did for farming lands in Monocrop Madness by checking sphere collision with the size of radius from the centre of the node.
                 // Here we are using additional layermask to only check collision against those objects with Obstacle Layer mask.
                 // If Obstacle object is found in sphere collision check, that node is untraversable.
-                bool isTraversable = !(Physics.CheckSphere(centrePointOfNode, nodeRadius, obstacleLayer));
+                bool isTraversable = !Physics.CheckSphere(worldPositionOfNode, nodeRadius, obstacleLayer);
 
                 // Creating Node
-                gridLayout[x, z] = new Node(isTraversable, centrePointOfNode);
+                gridLayout[x, z] = new Node(isTraversable, worldPositionOfNode, new Vector2Int(x, z));
             }
         }
+    }
+
+    public Node GetNodeFromWorldPosition(Vector3 worldPosition)
+    {
+        Vector2Int nodeCoords = GetNodeCoordsFromWorldPosition(worldPosition);
+        Node n = gridLayout[nodeCoords.x, nodeCoords.y];
+        return n;
+    }
+
+    Vector2Int GetNodeCoordsFromWorldPosition(Vector3 nodeWorldPosition)
+    {
+        // This is how we divide the area of grid as percentage based on the nodeWorldPosition. We get percentages between 0 and 1.
+        float percentageInXAxis = (nodeWorldPosition.x + (noOfNodesInXAxis / 2)) / noOfNodesInXAxis;
+        float percentageInZAxis = (-(nodeWorldPosition.z) + (noOfNodesInZAxis / 2)) / noOfNodesInZAxis; // -Z because Z forward is negative. And, by doing this we make the 0th node in Z Axis is on Top and not bottom.
+
+        // If the nodeWorldPosition is outside of the grid, we need to just clamp it
+        Mathf.Clamp01(percentageInXAxis);
+        Mathf.Clamp01(percentageInZAxis);
+
+        // Now we need to extract the node coords/indices with percentage so that we can use it on 2D grid array to get the node.
+        float nodeX = noOfNodesInXAxis * percentageInXAxis;
+        float nodeY = noOfNodesInZAxis * percentageInZAxis;
+
+        // Returning Node Coords/Indices
+        return new Vector2Int(Mathf.RoundToInt(nodeX), Mathf.RoundToInt(nodeY));
+    }
+
+    Vector3 GetWorldPositionFromNode(Vector2Int nodeXYCoord)
+    {
+        return gridLayout[nodeXYCoord.x, nodeXYCoord.y].PosInWorld;
     }
 }
