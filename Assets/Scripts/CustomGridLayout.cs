@@ -1,4 +1,5 @@
 using UnityEngine;
+using System.Collections.Generic;
 
 // This class is going to layout a gridLayout on the plane. This is a basic technique of dividing the map into grids.
 // Remember that the gridLayout is going to be layed out horizontally in 2D on top of the plane ground.
@@ -12,6 +13,9 @@ public class CustomGridLayout : MonoBehaviour
     private Transform groundTransform;
     [SerializeField]
     private MeshCollider groundMeshCollider;
+    [SerializeField]
+    private Pathfinding pathfinding;
+    private List<Node> path;
 
     // What poperties does a gridLayout have in general?
     // - CustomGridLayout Size in length and breadth. Should be (X,Z) in 3D world [Total size of the gridLayout in the world.]
@@ -42,7 +46,7 @@ public class CustomGridLayout : MonoBehaviour
 
     [Header("Node Properties")]
     // Keeping node radius to be adjusted dynamically for movement accuracy
-    [Range(0.5f, 3f)]
+    [Range(1f, 2f)]
     public float nodeRadius;
 
     // Diameter would be just radius*2
@@ -66,7 +70,13 @@ public class CustomGridLayout : MonoBehaviour
         groundTransform = GetComponent<Transform>();
         // Get Plane Mesh Collider
         groundMeshCollider = groundTransform?.GetComponent<MeshCollider>();
+        // Get pathfinding component
+        pathfinding = GetComponent<Pathfinding>();
+    }
 
+    // Start is called once before the first execution of Update after the MonoBehaviour is created
+    void Start()
+    {
         // Giving initial size value for the gridLayout. Instead of scale size, I am using meshcollider.size to get the actual size of the scaled plane ground, and assign that as the gridLayout size.
         // Since, this is a mesh collider and not any primitive collider, I had the option to use meshcollider.size directly, which in turn represents the actual size of the scaled plane primitive.
         gridLayoutSizeXZ.x = groundMeshCollider.bounds.size.x;
@@ -75,18 +85,16 @@ public class CustomGridLayout : MonoBehaviour
         // Giving an initial value for grid height
         gridLayoutSizeY = 0.15f;
 
+        nodeRadius = 1f; // starting with
+
         // Giving an initial diameter for nodes by multiplying radius with 2. And Radus is 0.5f by default.
         nodeDiameter = nodeRadius * 2;
 
         // Dividing by a single node size (here, diameter) would give us the number of nodes that can fit into the grid size in that respective axis.
         // Rounding up the float gridLayout size value to the nearest Int value.
-        noOfNodesInXAxis = Mathf.RoundToInt(gridLayoutSizeXZ.x/nodeDiameter);
-        noOfNodesInZAxis = Mathf.RoundToInt(gridLayoutSizeXZ.y/nodeDiameter); // Note: Since this is a Vector2 I'm doing gridLayoutSizeXZ.y
-    }
+        noOfNodesInXAxis = Mathf.RoundToInt(gridLayoutSizeXZ.x / nodeDiameter);
+        noOfNodesInZAxis = Mathf.RoundToInt(gridLayoutSizeXZ.y / nodeDiameter); // Note: Since this is a Vector2 I'm doing gridLayoutSizeXZ.y
 
-    // Start is called once before the first execution of Update after the MonoBehaviour is created
-    void Start()
-    {
         CreateGrid();
     }
 
@@ -139,6 +147,7 @@ public class CustomGridLayout : MonoBehaviour
                 foreach (Node n in gridLayout)
                 {
                     if (!n.IsTraversable) Gizmos.color = Color.red;
+                    else if (path != null && path.Contains(n)) Gizmos.color = Color.black;
                     else Gizmos.color = Color.green;
                     Gizmos.DrawCube(n.PosInWorld, Vector3.one * (nodeDiameter - 0.2f)); // - 0.2 to make the grids visible and clear by being seperate from each other.
                 }
@@ -224,5 +233,40 @@ public class CustomGridLayout : MonoBehaviour
     Vector3 GetWorldPositionFromNode(Vector2Int nodeXYCoord)
     {
         return gridLayout[nodeXYCoord.x, nodeXYCoord.y].PosInWorld;
+    }
+
+    public List<Node> GetNeighbourNodes(Node node)
+    {
+        List<Node> listOfNeighbourNodes = new List<Node>();
+
+        // In a square shaped grid formation, chances are there are minimun of 3 neighbours and upto a maximum of 8 neighbours.
+        // They will be in a minimum of 2x2 fomation upto a maximum of 3x3 formation. => 2x2, 2x3, 3x2, 3x3
+        for(int x = -1; x <= 1; x++)
+        {
+            for (int y = -1; y <= 1; y++)
+            {
+                // Skipping current tile
+                if(x == 0 && y == 0)
+                {
+                    continue;
+                }
+
+                int nodeCoordsX = node.NodeCoordsIn2DArray.x + x;
+                int nodeCoordsY = node.NodeCoordsIn2DArray.y + y;
+
+                // This check is done, so that the nodeCoords are representing a valid node from grid
+                if (nodeCoordsX >= 0 && nodeCoordsX < noOfNodesInXAxis && nodeCoordsY >= 0 && nodeCoordsY < noOfNodesInZAxis)
+                {
+                    listOfNeighbourNodes.Add(gridLayout[nodeCoordsX, nodeCoordsY]);
+                }
+            }
+        }
+
+        return listOfNeighbourNodes;
+    }
+
+    public void TriggerPathfinding(Node startNode, Node destinationNode)
+    {
+        path = pathfinding.FindPath(startNode, destinationNode);
     }
 }

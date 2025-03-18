@@ -15,6 +15,14 @@ public class Node
     // - A Vecto2Int representing node coords in the 2D array
     private Vector2Int nodeCoordsIn2DArray;
 
+    // Pathfinding Related
+    // - A Node to hold the parent node value - useful when pathfinding
+    private Node parentNode;
+    // - A float to store the gCost -> gCost is the distance/cost from current node to neighbour node. In Graphs, we can say this as the weight of an edge.
+    private float gCost;
+    // - A float to store the hCost -> hCost is the distance between the neighbour node to the target node. It is used in A*.
+    private float hCost;
+
     public Node(bool _isTraversable, Vector3 _posInWorld, Vector2Int _nodeCoordsIn2DArray)
     {
         IsTraversable = _isTraversable;
@@ -25,4 +33,10 @@ public class Node
     public bool IsTraversable { get { return isTraversable; } set { isTraversable = value; } }
     public Vector3 PosInWorld { get { return posInWorld; } set { posInWorld = value; } }
     public Vector2Int NodeCoordsIn2DArray { get { return nodeCoordsIn2DArray; } set { nodeCoordsIn2DArray = value; } }
+    public Node ParentNode { get { return parentNode; } set { parentNode = value; } }
+    public float GCost { get { return gCost; } set { gCost = value; } }
+    public float HCost { get { return hCost; } set { hCost = value; } }
+
+    // fCost is the sum of gCost and hCost of a node. It is the factor which decides which node to become the next current node. It is because the smaller the fCost, the efficient the path is. Again, used in A*.
+    public float FCost { get { return gCost + hCost; } }
 }

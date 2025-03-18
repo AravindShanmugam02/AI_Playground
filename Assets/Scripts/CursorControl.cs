@@ -17,6 +17,20 @@ public class CursorControl : MonoBehaviour
     Vector2Int nodeCoords;
     [SerializeField]
     Vector3 hitWorldPoint;
+    [SerializeField]
+    Vector2Int startNodeCoords;
+    [SerializeField]
+    Vector2Int destinationNodeCoords;
+
+    [Header("Pathfinding Debug")]
+    [SerializeField]
+    Node startNode;
+    [SerializeField]
+    Node destinationNode;
+    [SerializeField]
+    bool isPathfindingTriggered;
+
+    public bool IsCursorVisible { get { return isCursorVisible; } }
 
     void Awake()
     {
@@ -27,6 +41,7 @@ public class CursorControl : MonoBehaviour
     void Start()
     {
         isCursorVisible = false;
+        isPathfindingTriggered = false;
     }
 
     // Update is called once per frame
@@ -37,14 +52,69 @@ public class CursorControl : MonoBehaviour
             isCursorVisible = !isCursorVisible;
         }
 
+        if(isCursorVisible)
+        {
+            Cursor.lockState = CursorLockMode.Confined;
+        }
+        else
+        {
+            Cursor.lockState = CursorLockMode.Locked;
+        }
+
         Cursor.visible = isCursorVisible;
+        if(isCursorVisible)
+        {
+            CursorInput();
+        }
+    }
+
+    void CursorInput()
+    {
+        if(Input.GetMouseButtonDown(0))
+        {
+            if(startNode == null)
+            {
+                startNode = GetTheNodePointedByCursor();
+                startNodeCoords = startNode.NodeCoordsIn2DArray;
+            }
+            else
+            {
+                startNode = null;
+                startNodeCoords = Vector2Int.zero;
+            }
+        }
+
+        if(Input.GetMouseButtonDown(1))
+        {
+            if (destinationNode == null)
+            {
+                destinationNode = GetTheNodePointedByCursor();
+                destinationNodeCoords = destinationNode.NodeCoordsIn2DArray;
+            }
+            else
+            {
+                destinationNode = null;
+                destinationNodeCoords = Vector2Int.zero;
+            }
+        }
     }
 
     void FixedUpdate()
     {
         if(isCursorVisible)
         {
-            GetTheNodePointedByCursor();
+            if(startNode != null && destinationNode != null)
+            {
+                if(!isPathfindingTriggered) // So that this doesn't get called every Fixed Update.
+                {
+                    isPathfindingTriggered = true;
+                    customGridLayout.TriggerPathfinding(startNode, destinationNode);
+                }
+            }
+            else
+            {
+                isPathfindingTriggered = false;
+            }
         }
     }
 

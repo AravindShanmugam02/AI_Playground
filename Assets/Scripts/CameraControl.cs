@@ -149,6 +149,11 @@ public class CameraControl : MonoBehaviour
     public static Vector3 GetCameraTransformForward() => new Vector3(CameraTransformForward.x, CameraTransformForward.y, CameraTransformForward.z);
     #endregion
 
+    [Header("Cursor Properties")]
+    [SerializeField]
+    CursorControl cursorControl;
+
+
     void Awake()
     {
         // Directly using transform as this script is assigned to Main Camera
@@ -159,6 +164,8 @@ public class CameraControl : MonoBehaviour
     // Start is called once before the first execution of Update after the MonoBehaviour is created
     void Start()
     {
+        cursorControl = FindAnyObjectByType<CursorControl>().GetComponent<CursorControl>();
+
         cameraMovementSpeed = 15.0f;
         cameraMovementSmoothness = 1.0f;
         cameraRotationSpeed = 5.0f;
@@ -172,8 +179,11 @@ public class CameraControl : MonoBehaviour
     // Update is called once per frame
     void Update()
     {
-        CameraRotation();
-        CameraMovement();
+        if(!cursorControl.IsCursorVisible)
+        {
+            CameraRotation();
+            CameraMovement();
+        }
     }
 
     // I am using EulerAngles to calculate the rotation. Maybe that is why there happens weird uncontrollable rotations at certain values.
