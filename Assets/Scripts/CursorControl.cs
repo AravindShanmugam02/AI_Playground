@@ -17,18 +17,16 @@ public class CursorControl : MonoBehaviour
     Vector2Int nodeCoords;
     [SerializeField]
     Vector3 hitWorldPoint;
+
+    [Header("Pathfinding Debug")]
+    Node startNode;
+    Node destinationNode;
     [SerializeField]
     Vector2Int startNodeCoords;
     [SerializeField]
     Vector2Int destinationNodeCoords;
-
-    [Header("Pathfinding Debug")]
     [SerializeField]
-    Node startNode;
-    [SerializeField]
-    Node destinationNode;
-    [SerializeField]
-    bool isPathfindingTriggered;
+    bool canPathFindingBeTriggered;
 
     public bool IsCursorVisible { get { return isCursorVisible; } }
 
@@ -41,81 +39,89 @@ public class CursorControl : MonoBehaviour
     void Start()
     {
         isCursorVisible = false;
-        isPathfindingTriggered = false;
+        canPathFindingBeTriggered = false;
     }
 
     // Update is called once per frame
     void Update()
     {
+        CursorInput();
+
+        if (CanPathFindingBeTriggered())
+        {
+            customGridLayout.TriggerPathfinding(startNode, destinationNode);
+        }
+    }
+
+    void CursorInput()
+    {
         if (Input.GetKeyDown(KeyCode.LeftControl))
         {
             isCursorVisible = !isCursorVisible;
+            Cursor.visible = isCursorVisible;
         }
 
-        if(isCursorVisible)
+        if(isCursorVisible && Cursor.lockState == CursorLockMode.Confined)
+        {
+            if (Input.GetMouseButtonDown(0))
+            {
+                if (startNode == null)
+                {
+                    startNode = GetTheNodePointedByCursor();
+                    if (startNode != null) startNodeCoords = startNode.NodeCoordsIn2DArray;
+                }
+                else
+                {
+                    startNode = null;
+                    startNodeCoords = Vector2Int.zero;
+                }
+            }
+
+            if (Input.GetMouseButtonDown(1))
+            {
+                if (destinationNode == null)
+                {
+                    destinationNode = GetTheNodePointedByCursor();
+                    if (destinationNode != null) destinationNodeCoords = destinationNode.NodeCoordsIn2DArray;
+                }
+                else
+                {
+                    destinationNode = null;
+                    destinationNodeCoords = Vector2Int.zero;
+                }
+            }
+        }
+    }
+
+    bool CanPathFindingBeTriggered()
+    {
+        if (isCursorVisible)
         {
             Cursor.lockState = CursorLockMode.Confined;
+
+            if (startNode != null && destinationNode != null)
+            {
+                if (!canPathFindingBeTriggered)
+                {
+                    canPathFindingBeTriggered = true;
+                }
+            }
+            else
+            {
+                canPathFindingBeTriggered = false;
+            }
         }
         else
         {
             Cursor.lockState = CursorLockMode.Locked;
         }
 
-        Cursor.visible = isCursorVisible;
-        if(isCursorVisible)
-        {
-            CursorInput();
-        }
-    }
-
-    void CursorInput()
-    {
-        if(Input.GetMouseButtonDown(0))
-        {
-            if(startNode == null)
-            {
-                startNode = GetTheNodePointedByCursor();
-                startNodeCoords = startNode.NodeCoordsIn2DArray;
-            }
-            else
-            {
-                startNode = null;
-                startNodeCoords = Vector2Int.zero;
-            }
-        }
-
-        if(Input.GetMouseButtonDown(1))
-        {
-            if (destinationNode == null)
-            {
-                destinationNode = GetTheNodePointedByCursor();
-                destinationNodeCoords = destinationNode.NodeCoordsIn2DArray;
-            }
-            else
-            {
-                destinationNode = null;
-                destinationNodeCoords = Vector2Int.zero;
-            }
-        }
+        return canPathFindingBeTriggered;
     }
 
     void FixedUpdate()
     {
-        if(isCursorVisible)
-        {
-            if(startNode != null && destinationNode != null)
-            {
-                if(!isPathfindingTriggered) // So that this doesn't get called every Fixed Update.
-                {
-                    isPathfindingTriggered = true;
-                    customGridLayout.TriggerPathfinding(startNode, destinationNode);
-                }
-            }
-            else
-            {
-                isPathfindingTriggered = false;
-            }
-        }
+
     }
 
     Node GetTheNodePointedByCursor()
@@ -145,7 +151,7 @@ public class CursorControl : MonoBehaviour
 
         Ray ray = Camera.main.ScreenPointToRay(Input.mousePosition); // new Ray(CameraControl.GetCameraTransformForward(), Input.mousePosition) -- Isn't working
         RaycastHit hit;
-        Physics.Raycast(ray, out hit, 100.0f);
+        Physics.Raycast(ray, out hit);
         hitWorldPoint = hit.point;
         return hitWorldPoint;
     }

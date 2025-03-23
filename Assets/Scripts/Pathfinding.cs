@@ -23,10 +23,6 @@ public class Pathfinding : MonoBehaviour
     List<Node> openSet; // Contains nodes that are yet to be explored. // Using list for openSet because can't use openSet[0] if it was HashSet.
     HashSet<Node> closedSet; // Contains nodes that are already explored. // Using HashSet because we need only unique values in them and we are not going to lookup in closedSet like closedSet[0].
 
-    // Path
-    [SerializeField]
-    List<Node> pathNodeList;
-
     // Grid
     CustomGridLayout customGridLayout;
 
@@ -49,19 +45,19 @@ public class Pathfinding : MonoBehaviour
     }
 
     // This is basically used to calculate HCost all the time. And sometimes other costs too!
-    public float GetDistanceBetweenNodes(Node fromNode, Node toNode)
+    public float GetDistanceBetweenNodes(Node fromNode, Node toNode) 
     {
-        float dist = 0.0f;
+        float dist;
         
         // Using Manhattan distance formula as this is a grid-based movement.
         dist = (Mathf.Abs(fromNode.NodeCoordsIn2DArray.x - toNode.NodeCoordsIn2DArray.x)) + (Mathf.Abs(fromNode.NodeCoordsIn2DArray.y - toNode.NodeCoordsIn2DArray.y));
+
         return dist;
     }
 
     public List<Node> FindPath(Node nodeA, Node nodeB)
     {
-        pathNodeList = new List<Node>();
-        pathNodeList.Clear();
+        List<Node> pathNodeList = new List<Node>();
 
         switch (algo)
         {
@@ -72,7 +68,7 @@ public class Pathfinding : MonoBehaviour
             case Algorithm.Dijkstra:
                 break;
             case Algorithm.AStar:
-                AStar(nodeA, nodeB);
+                pathNodeList = AStar(nodeA, nodeB);
                 break;
             default:
                 break;
@@ -81,7 +77,7 @@ public class Pathfinding : MonoBehaviour
         return pathNodeList;
     }
 
-    private void AStar(Node startNode, Node destinationNode)
+    private List<Node> AStar(Node startNode, Node destinationNode)
     {
         List<Node> pathUsingAStar = new List<Node>();
         openSet = new List<Node>();
@@ -91,17 +87,19 @@ public class Pathfinding : MonoBehaviour
         openSet.Add(startNode);
 
         // Iterate through the openSet to get values one by one until openSet is empty
-        while(openSet.Count > 0) // [TIME COMPLEXITY: O(neighbourNode)]
+        while (openSet.Count > 0) // [TIME COMPLEXITY: O(n)] where n is number of neighbourNode
         {
-            // Assign startNode to currentNode. Just as formality for first start node.
+            // Assign startNode to currentNode for starting and also each time of iteration a new neighbour node becomes current node.
             Node currentNode = openSet[0];
 
-            // Loop through the openSet to find node with lowest fCost. Iterating from 1 as 0 is assigned to currentNode in above line.
-            for(int i = 1; i < openSet.Count; i++) // [TIME COMPLEXITY: O(neighbourNode)]
+            // Loop through the openSet to find node with lowest fCost.
+            foreach (Node node in openSet) // [TIME COMPLEXITY: O(n) as this is a list] where n is number of neighbourNode
             {
-                if(openSet[i].FCost < currentNode.FCost || (openSet[i].FCost == currentNode.FCost && openSet[i].HCost < currentNode.HCost))
+                if (node == currentNode) continue; // This is to skip the 1st iteration because openSet[0] assigned to currentNode in above.
+
+                if (node.FCost < currentNode.FCost || (node.FCost == currentNode.FCost && node.HCost < currentNode.HCost))
                 {
-                    currentNode = openSet[i];
+                    currentNode = node;
                 }
             }
 
@@ -112,25 +110,25 @@ public class Pathfinding : MonoBehaviour
             closedSet.Add(currentNode);
 
             // If currentNode is the destinationNode, then retrace the path.
-            if(currentNode == destinationNode)
+            if (currentNode == destinationNode)
             {
-                RetracePath(startNode, destinationNode);
-                return;
+                pathUsingAStar = RetracePath(startNode, destinationNode);
+                return pathUsingAStar;
             }
 
-            // if not destinationNode, we now find out the neighbours of the node.
-            List<Node> neighbours = customGridLayout.GetNeighbourNodes(currentNode);
+            // if not destinationNode, we now find out the listOfNeighbourNodes of the node.
+            List<Node> listOfNeighbourNodes = customGridLayout.GetNeighbourNodes(currentNode);
 
             // Calculate the gCost for getting from currentNode to that neighbournode.
-            foreach(Node neighbourNode in neighbours)
+            foreach (Node neighbourNode in listOfNeighbourNodes)
             {
-                // We ignore the obstacle covered nodes as they are non traversable and the nodes that are already in closedSet, which means they have been already explored.
-                if (!neighbourNode.IsTraversable && closedSet.Contains(neighbourNode)) continue;
+                // We ignore the obstacle covered nodes as they are non traversable OR (not and) the nodes that are already in closedSet (which means they have been already explored).
+                if (!neighbourNode.IsTraversable || closedSet.Contains(neighbourNode)) continue; // FOUND THE SILLY MISTAKE I DID HERE... INSTEAD OF MAKING THIS A OR || CONDITION I PUT AND && CONDITION... SUCH A BLUNDER!!!!!
 
                 float newMovementCostToNeighbour = currentNode.GCost + GetDistanceBetweenNodes(currentNode, neighbourNode);
 
-                // If (the movement cost from current node to neightbour node is cheaper than neighbour node's GCost) OR (the neighbour node is not explored yet)
-                if (newMovementCostToNeighbour < neighbourNode.GCost || !openSet.Contains(neighbourNode))
+                // If (the neighbour node is not explored yet) OR (the movement cost from current node to neightbour node is cheaper than neighbour node's GCost) --> Neighbour not explored yet takes the priority in this if condition.
+                if (!openSet.Contains(neighbourNode) || newMovementCostToNeighbour < neighbourNode.GCost)
                 {
                     // Assigning a new GCost as this is the shorter than it's old value (OR) giving it a value for the first time as it hasn't been added to openset yet, so that it can be chosen to be explored.
                     neighbourNode.GCost = newMovementCostToNeighbour;
@@ -141,26 +139,32 @@ public class Pathfinding : MonoBehaviour
                     // Setting a parent node for tracking back if this node makes it to the pathUsingAStar List.
                     neighbourNode.ParentNode = currentNode;
 
-                    // if not in openSet add them, so that these neighbours can be explored based on their FCost priority
-                    if(!openSet.Contains(neighbourNode))
+                    // if not in openSet add them, so that these listOfNeighbourNodes can be explored based on their FCost priority.
+                    // Added in the end as any Cost calculations can be done before adding it in the list. But it doesn't make any difference as we are uisng references in C#.
+                    if (!openSet.Contains(neighbourNode))
                     {
                         openSet.Add(neighbourNode);
                     }
                 }
             }
         }
+
+        return pathUsingAStar;
     }
 
-    private void RetracePath(Node startNode, Node destinationNode)
+    private List<Node> RetracePath(Node startNode, Node destinationNode)
     {
         Node n = destinationNode;
+        List<Node> pathNodeList = new List<Node>();
 
         // Runs until it reaches startNode, and won't add startNode as it is the node where player is already on.
-        while(startNode != n)
+        while (startNode != n)
         {
             pathNodeList.Add(n);
             n = n.ParentNode;
         }
+
         pathNodeList.Reverse();
+        return pathNodeList;
     }
 }
