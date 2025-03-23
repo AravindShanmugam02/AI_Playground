@@ -223,7 +223,11 @@ public class CustomGridLayout : MonoBehaviour
 
     Vector2Int GetNodeCoordsFromWorldPosition(Vector3 nodeWorldPosition)
     {
-        // This is how we divide the area of grid as percentage based on the nodeWorldPosition. We get percentages between 0 and 1.
+        // The below is how we divide the area of grid as percentage based on the nodeWorldPosition. We get percentages between 0 and 1.
+
+        // We are subtracting transform.position with respective axis of nodeWorldPosition because if the object on which we are generating grid, eg: plane,
+        // is not positioned at (0,0,0) then without doing this, the wrong node or no node would be obtained from the world position. So, this ensures that even the grid
+        // generated object is kept at some random position other than (0,0,0), it will still get the correct node coords with the node's world position. We do it for both axis.
         float percentageInXAxis = (nodeWorldPosition.x - transform.position.x + (noOfNodesInXAxis / 2)) / noOfNodesInXAxis;
         float percentageInZAxis = (-nodeWorldPosition.z - transform.position.z + (noOfNodesInZAxis / 2)) / noOfNodesInZAxis; // -Z because Z forward is negative. And, by doing this we make the 0th node in Z Axis is on Top and not bottom.
 
