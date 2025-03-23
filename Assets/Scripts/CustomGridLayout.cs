@@ -16,6 +16,8 @@ public class CustomGridLayout : MonoBehaviour
     [SerializeField]
     private Pathfinding pathfinding;
     private List<Node> path;
+    private List<Node> debugOpenList;
+    private List<Node> debugClosedList;
 
     // What poperties does a gridLayout have in general?
     // - CustomGridLayout Size in length and breadth. Should be (X,Z) in 3D world [Total size of the gridLayout in the world.]
@@ -201,7 +203,9 @@ public class CustomGridLayout : MonoBehaviour
                 foreach (Node n in gridLayout)
                 {
                     if (!n.IsTraversable) Gizmos.color = Color.red;
-                    else if (path != null && path.Contains(n)) Gizmos.color = Color.black;
+                    else if (path != null && path.Contains(n)) Gizmos.color = Color.green;
+                    else if (debugClosedList != null && debugClosedList.Contains(n)) Gizmos.color = Color.black;
+                    else if (debugOpenList != null && debugOpenList.Contains(n)) Gizmos.color = Color.blue;
                     else Gizmos.color = Color.white;
                     Gizmos.DrawWireCube(n.PosInWorld, new Vector3(Vector3.right.x * (nodeDiameter - 0.2f), gridLayoutSizeY, Vector3.forward.z * (nodeDiameter - 0.2f))); // - 0.2 to make the grids visible and clear by being seperate from each other.
                 }
@@ -281,5 +285,7 @@ public class CustomGridLayout : MonoBehaviour
     public void TriggerPathfinding(Node startNode, Node destinationNode)
     {
         path = pathfinding.FindPath(startNode, destinationNode);
+        debugOpenList = pathfinding.OpenSet;
+        debugClosedList = pathfinding.ClosedSet;
     }
 }

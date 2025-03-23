@@ -23,6 +23,21 @@ public class Pathfinding : MonoBehaviour
     List<Node> openSet; // Contains nodes that are yet to be explored. // Using list for openSet because can't use openSet[0] if it was HashSet.
     HashSet<Node> closedSet; // Contains nodes that are already explored. // Using HashSet because we need only unique values in them and we are not going to lookup in closedSet like closedSet[0].
 
+    // Getter
+    public List<Node> OpenSet { get { return openSet; } }
+    public List<Node> ClosedSet
+    {
+        get
+        {
+            List<Node> cSet = new List<Node>();
+            foreach (Node n in closedSet)
+            {
+                cSet.Add(n);
+            }
+            return cSet;
+        }
+    }
+
     // Grid
     CustomGridLayout customGridLayout;
 
