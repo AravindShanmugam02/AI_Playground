@@ -3,30 +3,22 @@ using UnityEngine;
 public class CursorControl : MonoBehaviour
 {
     [Header("Ground Properties")]
-    [SerializeField]
-    private LayerMask groundLayerMask;
-    [SerializeField]
-    private CustomGridLayout customGridLayout;
+    [SerializeField] LayerMask groundLayerMask;
+    [SerializeField] CustomGridLayout customGridLayout;
 
     [Header("Cursor properties")]
-    [SerializeField]
-    bool isCursorVisible;
+    [SerializeField] bool isCursorVisible;
 
     [Header("Grid Debug")]
-    [SerializeField]
-    Vector2Int nodeCoords;
-    [SerializeField]
-    Vector3 hitWorldPoint;
+    [SerializeField] Vector2Int nodeCoords;
+    [SerializeField] Vector3 hitWorldPoint;
 
     [Header("Pathfinding Debug")]
     Node startNode;
     Node destinationNode;
-    [SerializeField]
-    Vector2Int startNodeCoords;
-    [SerializeField]
-    Vector2Int destinationNodeCoords;
-    [SerializeField]
-    bool canPathFindingBeTriggered;
+    [SerializeField] Vector2Int startNodeCoords;
+    [SerializeField] Vector2Int destinationNodeCoords;
+    [SerializeField] bool canPathFindingBeTriggered;
     public bool CanPathFindingBeTriggered { get { return canPathFindingBeTriggered; } set { canPathFindingBeTriggered = value; } }
 
     public bool IsCursorVisible { get { return isCursorVisible; } }

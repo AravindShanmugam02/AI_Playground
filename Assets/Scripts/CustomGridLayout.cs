@@ -1,4 +1,5 @@
 using UnityEngine;
+using TMPro;
 using System.Collections.Generic;
 
 // This class is going to layout a gridLayout on the plane. This is a basic technique of dividing the map into grids.
@@ -9,24 +10,20 @@ public class CustomGridLayout : MonoBehaviour
 {
     // Members for getting grounds's components
     [Header("Ground Properties")]
-    [SerializeField]
-    private Transform groundTransform;
-    [SerializeField]
-    private MeshCollider groundMeshCollider;
+    [SerializeField] Transform groundTransform;
+    [SerializeField] MeshCollider groundMeshCollider;
 
     [Header("Pathfinding Properties")]
-    [SerializeField]
-    private Pathfinding pathfinding;
+    [SerializeField] Pathfinding pathfinding;
     private List<Node> path;
     private List<Node> debugOpenList;
     private List<Node> debugClosedList;
-    [SerializeField]
-    Pathfinding.Algorithm currentAlgo;
+    [SerializeField] Pathfinding.Algorithm currentAlgo;
     Pathfinding.Algorithm previousAlgo;
+    [SerializeField] TextMeshProUGUI Algorithm;
 
     [Header("Cursor Control")]
-    [SerializeField]
-    private CursorControl cursorControl;
+    [SerializeField] CursorControl cursorControl;
 
     // What poperties does a gridLayout have in general?
     // - CustomGridLayout Size in length and breadth. Should be (X,Z) in 3D world [Total size of the gridLayout in the world.]
@@ -41,20 +38,17 @@ public class CustomGridLayout : MonoBehaviour
 
     [Header("CustomGridLayout Properties")]
     // CustomGridLayout length and breadth
-    [SerializeField]
-    private Vector2 gridLayoutSizeXZ;
+    [SerializeField] private Vector2 gridLayoutSizeXZ;
 
     // Keeping it as a Range as we are going to adjust it dynamically for visualisation
     [Range(0.0f, 1.0f)]
     public float gridLayoutSizeY; // Doesn't need [SerializeField] because it is a public variable. According to Unity library, if a variable is public, it will be displayed on the inspector by default.
 
     // To hold all the nodes generated based on how many nodes can fit in to the current gridLayout layout size
-    [SerializeField]
-    Node[,] gridLayout;
+    [SerializeField] Node[,] gridLayout;
 
     // [DEBUG PURPOSE]
-    [SerializeField]
-    Vector3 topLeftCornerPosition;
+    [SerializeField] Vector3 topLeftCornerPosition;
 
     [Header("Node Properties")]
     // Keeping node radius to be adjusted dynamically for movement accuracy
@@ -62,19 +56,15 @@ public class CustomGridLayout : MonoBehaviour
     public float nodeRadius;
 
     // Diameter would be just radius*2
-    [SerializeField]
-    float nodeDiameter;
+    [SerializeField] float nodeDiameter;
 
     // A couple of holders for number of nodes in each axis that would be rounded up to be used for gridLayout size when initialising.
-    [SerializeField]
-    int noOfNodesInXAxis;
-    [SerializeField]
-    int noOfNodesInZAxis;
+    [SerializeField] int noOfNodesInXAxis;
+    [SerializeField] int noOfNodesInZAxis;
 
     [Header("Reference Variables")] // Just to use it for condition checking
     // LayerMask to store the Obstacle layer from inspector
-    [SerializeField]
-    private LayerMask obstacleLayer;
+    [SerializeField] private LayerMask obstacleLayer;
 
     void Awake()
     {
@@ -327,6 +317,8 @@ public class CustomGridLayout : MonoBehaviour
                 cursorControl.CanPathFindingBeTriggered = false; // Making this false, will trigger Pathfinding freshly from Cursor Control on the next iteration.
             }
         }
+
+        Algorithm.text = "Algorithm : " + currentAlgo.ToString();
     }
 
     public void ResetNodesCosts()

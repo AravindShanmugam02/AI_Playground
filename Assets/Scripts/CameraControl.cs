@@ -8,14 +8,10 @@ public class CameraControl : MonoBehaviour
     public float cameraRotationSpeed;
     public float cameraRotationSmoothness;
 
-    [SerializeField]
-    private Vector3 cameraNewMovementValue;
-    [SerializeField]
-    private Vector3 cameraNewRotationValue;
-    [SerializeField]
-    private float rotationAxisY, rotationAxisX, mouseX, mouseY;
-    [SerializeField]
-    private Vector3 cameraCurrentVelocity;
+    [SerializeField] Vector3 cameraNewMovementValue;
+    [SerializeField] Vector3 cameraNewRotationValue;
+    [SerializeField] float rotationAxisY, rotationAxisX, mouseX, mouseY;
+    [SerializeField] Vector3 cameraCurrentVelocity;
 
     #region To Write [TODO]
     //private Transform cameraTransform;
@@ -150,8 +146,7 @@ public class CameraControl : MonoBehaviour
     #endregion
 
     [Header("Cursor Properties")]
-    [SerializeField]
-    CursorControl cursorControl;
+    [SerializeField] CursorControl cursorControl;
 
 
     void Awake()
