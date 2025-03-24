@@ -72,10 +72,10 @@ public class Pathfinding : MonoBehaviour
 
         switch (currentAlgo)
         {
-            case Algorithm.DFS:
-                break;
-            case Algorithm.BFS:
-                break;
+            //case Algorithm.DFS:
+            //    break;
+            //case Algorithm.BFS:
+            //    break;
             case Algorithm.Dijkstra:
                 pathNodeList = Dijkstra(nodeA, nodeB);
                 break;
