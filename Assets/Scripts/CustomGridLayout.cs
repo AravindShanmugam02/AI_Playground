@@ -13,11 +13,20 @@ public class CustomGridLayout : MonoBehaviour
     private Transform groundTransform;
     [SerializeField]
     private MeshCollider groundMeshCollider;
+
+    [Header("Pathfinding Properties")]
     [SerializeField]
     private Pathfinding pathfinding;
     private List<Node> path;
     private List<Node> debugOpenList;
     private List<Node> debugClosedList;
+    [SerializeField]
+    Pathfinding.Algorithm currentAlgo;
+    Pathfinding.Algorithm previousAlgo;
+
+    [Header("Cursor Control")]
+    [SerializeField]
+    private CursorControl cursorControl;
 
     // What poperties does a gridLayout have in general?
     // - CustomGridLayout Size in length and breadth. Should be (X,Z) in 3D world [Total size of the gridLayout in the world.]
@@ -75,11 +84,22 @@ public class CustomGridLayout : MonoBehaviour
         groundMeshCollider = groundTransform?.GetComponent<MeshCollider>();
         // Get pathfinding component
         pathfinding = GetComponent<Pathfinding>();
+
+        // Setting algorithm to none
+        currentAlgo = Pathfinding.Algorithm.None;
+        previousAlgo = Pathfinding.Algorithm.None;
+
+        // Initiliasing List, if not initialised, the list.Count and similar produces null reference expection.
+        path = new List<Node>();
+        debugOpenList = new List<Node>();
+        debugClosedList = new List<Node>();
     }
 
     // Start is called once before the first execution of Update after the MonoBehaviour is created
     void Start()
     {
+        cursorControl = FindAnyObjectByType<CursorControl>().GetComponent<CursorControl>();
+
         // Giving initial size value for the gridLayout. Instead of scale size, I am using meshcollider.size to get the actual size of the scaled plane ground, and assign that as the gridLayout size.
         // Since, this is a mesh collider and not any primitive collider, I had the option to use meshcollider.size directly, which in turn represents the actual size of the scaled plane primitive.
         gridLayoutSizeXZ.x = groundMeshCollider.bounds.size.x;
@@ -104,7 +124,7 @@ public class CustomGridLayout : MonoBehaviour
     // Update is called once per frame
     void Update()
     {
-
+        SwitchAlgo();
     }
 
     void CreateGrid()
@@ -203,9 +223,9 @@ public class CustomGridLayout : MonoBehaviour
                 foreach (Node n in gridLayout)
                 {
                     if (!n.IsTraversable) Gizmos.color = Color.red;
-                    else if (path != null && path.Contains(n)) Gizmos.color = Color.green;
-                    else if (debugClosedList != null && debugClosedList.Contains(n)) Gizmos.color = Color.black;
-                    else if (debugOpenList != null && debugOpenList.Contains(n)) Gizmos.color = Color.blue;
+                    else if (path.Count > 0 && path.Contains(n)) Gizmos.color = Color.green;
+                    else if (debugClosedList.Count > 0 && debugClosedList.Contains(n)) Gizmos.color = Color.black;
+                    else if (debugOpenList.Count > 0 && debugOpenList.Contains(n)) Gizmos.color = Color.blue;
                     else Gizmos.color = Color.white;
                     Gizmos.DrawWireCube(n.PosInWorld, new Vector3(Vector3.right.x * (nodeDiameter - 0.2f), gridLayoutSizeY, Vector3.forward.z * (nodeDiameter - 0.2f))); // - 0.2 to make the grids visible and clear by being seperate from each other.
                 }
@@ -284,8 +304,38 @@ public class CustomGridLayout : MonoBehaviour
 
     public void TriggerPathfinding(Node startNode, Node destinationNode)
     {
-        path = pathfinding.FindPath(startNode, destinationNode);
+        path = pathfinding.FindPath(startNode, destinationNode, currentAlgo);
         debugOpenList = pathfinding.OpenSet;
         debugClosedList = pathfinding.ClosedSet;
+    }
+
+    void SwitchAlgo()
+    {
+        if (Input.GetKeyDown(KeyCode.P))
+        {
+            previousAlgo = currentAlgo;
+            currentAlgo += 1; // currentAlgo++ doesn't work for enum.
+
+            if (currentAlgo > Pathfinding.Algorithm.AStar)
+            {
+                currentAlgo = Pathfinding.Algorithm.None;
+            }
+
+            if (previousAlgo != currentAlgo)
+            {
+                ResetNodesCosts();
+                cursorControl.CanPathFindingBeTriggered = false; // Making this false, will trigger Pathfinding freshly from Cursor Control on the next iteration.
+            }
+        }
+    }
+
+    public void ResetNodesCosts()
+    {
+        foreach(Node n in gridLayout)
+        {
+            n.GCost = float.MaxValue / 2f; // dividing by 2 because G + H gives value for F. Since we can't set F manually, we make sure that F variable doesn't goes beyond the max value of the float datatype.
+            n.HCost = float.MaxValue / 2f; // dividing by 2 because G + H gives value for F. Since we can't set F manually, we make sure that F variable doesn't goes beyond the max value of the float datatype.
+            // By setting H and G cost, the FCost would automatically become 0 as FCost is GCost + HCost in the implementation. Meaning, you don't need to specifically set FCost.
+        }
     }
 }

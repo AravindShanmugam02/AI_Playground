@@ -27,6 +27,7 @@ public class CursorControl : MonoBehaviour
     Vector2Int destinationNodeCoords;
     [SerializeField]
     bool canPathFindingBeTriggered;
+    public bool CanPathFindingBeTriggered { get { return canPathFindingBeTriggered; } set { canPathFindingBeTriggered = value; } }
 
     public bool IsCursorVisible { get { return isCursorVisible; } }
 
@@ -47,7 +48,7 @@ public class CursorControl : MonoBehaviour
     {
         CursorInput();
 
-        if (CanPathFindingBeTriggered())
+        if (CheckIfPathFindingCanBeTriggered())
         {
             customGridLayout.TriggerPathfinding(startNode, destinationNode);
         }
@@ -93,7 +94,7 @@ public class CursorControl : MonoBehaviour
         }
     }
 
-    bool CanPathFindingBeTriggered()
+    bool CheckIfPathFindingCanBeTriggered()
     {
         if (isCursorVisible)
         {
