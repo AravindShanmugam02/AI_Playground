@@ -66,6 +66,15 @@ public class CustomGridLayout : MonoBehaviour
     // LayerMask to store the Obstacle layer from inspector
     [SerializeField] private LayerMask obstacleLayer;
 
+    [Header("Tile Cube Properties")]
+    [SerializeField] Material tileRed;
+    [SerializeField] Material tileBlue;
+    [SerializeField] Material tileGreen;
+    [SerializeField] Material tileBlack;
+    [SerializeField] Material tileWhite;
+    [SerializeField] GameObject tileCubePrefab;
+    [SerializeField] GameObject tileCubePrefabContainer;
+
     void Awake()
     {
         // Get Plane transform
@@ -207,18 +216,57 @@ public class CustomGridLayout : MonoBehaviour
             // Draw the grid layout using wire cube
             Gizmos.DrawWireCube(groundTransform.position, new Vector3(gridLayoutSizeXZ.x, gridLayoutSizeY, gridLayoutSizeXZ.y));
 
+            List<GameObject> listOfGObj = new List<GameObject>();
+
             // Draw the nodes within the grid layout
             if (gridLayout != null)
             {
                 foreach (Node n in gridLayout)
                 {
-                    if (!n.IsTraversable) Gizmos.color = Color.red;
-                    else if (path.Count > 0 && path.Contains(n)) Gizmos.color = Color.green;
-                    else if (debugClosedList.Count > 0 && debugClosedList.Contains(n)) Gizmos.color = Color.black;
-                    else if (debugOpenList.Count > 0 && debugOpenList.Contains(n)) Gizmos.color = Color.blue;
-                    else Gizmos.color = Color.white;
+                    if (!n.IsTraversable)
+                    {
+                        Gizmos.color = Color.red;
+                        GameObject gobj = GameObject.Instantiate(tileCubePrefab, n.PosInWorld, Quaternion.Euler(0f, 0f, 0f), tileCubePrefabContainer.transform);
+                        gobj.transform.GetComponent<MeshRenderer>().material = tileRed;
+                        listOfGObj.Add(gobj);
+
+                    }
+                    else if (path.Count > 0 && path.Contains(n))
+                    {
+                        Gizmos.color = Color.green;
+                        GameObject gobj = GameObject.Instantiate(tileCubePrefab, n.PosInWorld, Quaternion.Euler(0f, 0f, 0f), tileCubePrefabContainer.transform);
+                        gobj.transform.GetComponent<MeshRenderer>().material = tileGreen;
+                        listOfGObj.Add(gobj);
+                    }
+                    else if (debugClosedList.Count > 0 && debugClosedList.Contains(n))
+                    {
+                        Gizmos.color = Color.black;
+                        GameObject gobj = GameObject.Instantiate(tileCubePrefab, n.PosInWorld, Quaternion.Euler(0f, 0f, 0f), tileCubePrefabContainer.transform);
+                        gobj.transform.GetComponent<MeshRenderer>().material = tileBlack;
+                        listOfGObj.Add(gobj);
+                    }
+                    else if (debugOpenList.Count > 0 && debugOpenList.Contains(n))
+                    {
+                        Gizmos.color = Color.blue;
+                        GameObject gobj = GameObject.Instantiate(tileCubePrefab, n.PosInWorld, Quaternion.Euler(0f, 0f, 0f), tileCubePrefabContainer.transform);
+                        gobj.transform.GetComponent<MeshRenderer>().material = tileBlue;
+                        listOfGObj.Add(gobj);
+                    }
+                    else
+                    {
+                        Gizmos.color = Color.white;
+                        GameObject gobj = GameObject.Instantiate(tileCubePrefab, n.PosInWorld, Quaternion.Euler(0f, 0f, 0f), tileCubePrefabContainer.transform);
+                        gobj.transform.GetComponent<MeshRenderer>().material = tileWhite;
+                        listOfGObj.Add(gobj);
+                    }
+
                     Gizmos.DrawWireCube(n.PosInWorld, new Vector3(Vector3.right.x * (nodeDiameter - 0.2f), gridLayoutSizeY, Vector3.forward.z * (nodeDiameter - 0.2f))); // - 0.2 to make the grids visible and clear by being seperate from each other.
                 }
+            }
+
+            foreach (GameObject gobj in listOfGObj)
+            {
+                Destroy(gobj);
             }
         }
     }
