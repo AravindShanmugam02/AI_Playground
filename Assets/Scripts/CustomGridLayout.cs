@@ -216,8 +216,6 @@ public class CustomGridLayout : MonoBehaviour
             // Draw the grid layout using wire cube
             Gizmos.DrawWireCube(groundTransform.position, new Vector3(gridLayoutSizeXZ.x, gridLayoutSizeY, gridLayoutSizeXZ.y));
 
-            List<GameObject> listOfGObj = new List<GameObject>();
-
             // Draw the nodes within the grid layout
             if (gridLayout != null)
             {
@@ -226,41 +224,67 @@ public class CustomGridLayout : MonoBehaviour
                     if (!n.IsTraversable)
                     {
                         Gizmos.color = Color.red;
-                        GameObject gobj = GameObject.Instantiate(tileCubePrefab, n.PosInWorld, Quaternion.Euler(0f, 0f, 0f), tileCubePrefabContainer.transform);
-                        gobj.transform.GetComponent<MeshRenderer>().material = tileRed;
-                        listOfGObj.Add(gobj);
-
                     }
                     else if (path.Count > 0 && path.Contains(n))
                     {
                         Gizmos.color = Color.green;
-                        GameObject gobj = GameObject.Instantiate(tileCubePrefab, n.PosInWorld, Quaternion.Euler(0f, 0f, 0f), tileCubePrefabContainer.transform);
-                        gobj.transform.GetComponent<MeshRenderer>().material = tileGreen;
-                        listOfGObj.Add(gobj);
                     }
                     else if (debugClosedList.Count > 0 && debugClosedList.Contains(n))
                     {
                         Gizmos.color = Color.black;
-                        GameObject gobj = GameObject.Instantiate(tileCubePrefab, n.PosInWorld, Quaternion.Euler(0f, 0f, 0f), tileCubePrefabContainer.transform);
-                        gobj.transform.GetComponent<MeshRenderer>().material = tileBlack;
-                        listOfGObj.Add(gobj);
                     }
                     else if (debugOpenList.Count > 0 && debugOpenList.Contains(n))
                     {
                         Gizmos.color = Color.blue;
-                        GameObject gobj = GameObject.Instantiate(tileCubePrefab, n.PosInWorld, Quaternion.Euler(0f, 0f, 0f), tileCubePrefabContainer.transform);
-                        gobj.transform.GetComponent<MeshRenderer>().material = tileBlue;
-                        listOfGObj.Add(gobj);
                     }
                     else
                     {
                         Gizmos.color = Color.white;
-                        GameObject gobj = GameObject.Instantiate(tileCubePrefab, n.PosInWorld, Quaternion.Euler(0f, 0f, 0f), tileCubePrefabContainer.transform);
-                        gobj.transform.GetComponent<MeshRenderer>().material = tileWhite;
-                        listOfGObj.Add(gobj);
                     }
 
                     Gizmos.DrawWireCube(n.PosInWorld, new Vector3(Vector3.right.x * (nodeDiameter - 0.2f), gridLayoutSizeY, Vector3.forward.z * (nodeDiameter - 0.2f))); // - 0.2 to make the grids visible and clear by being seperate from each other.
+                }
+            }
+        }
+    }
+
+    // Kept this separate from OnDrawGizmos as Gizmos are only seen in editor view. Not in builds.
+    void OnDrawDebugTiles()
+    {
+        // Will make sure to draw only when this object is in the play mode.
+        if (Application.IsPlaying(this))
+        {
+            List<GameObject> listOfGObj = new List<GameObject>();
+
+            // Draw the nodes within the grid layout
+            if (gridLayout != null)
+            {
+                foreach (Node n in gridLayout)
+                {
+                    GameObject gobj = GameObject.Instantiate(tileCubePrefab, n.PosInWorld, Quaternion.Euler(0f, 0f, 0f), tileCubePrefabContainer.transform);
+
+                    if (!n.IsTraversable)
+                    {
+                        gobj.transform.GetComponent<MeshRenderer>().material = tileRed;
+                    }
+                    else if (path.Count > 0 && path.Contains(n))
+                    {
+                        gobj.transform.GetComponent<MeshRenderer>().material = tileGreen;
+                    }
+                    else if (debugClosedList.Count > 0 && debugClosedList.Contains(n))
+                    {
+                        gobj.transform.GetComponent<MeshRenderer>().material = tileBlack;
+                    }
+                    else if (debugOpenList.Count > 0 && debugOpenList.Contains(n))
+                    {
+                        gobj.transform.GetComponent<MeshRenderer>().material = tileBlue;
+                    }
+                    else
+                    {
+                        gobj.transform.GetComponent<MeshRenderer>().material = tileWhite;
+                    }
+
+                    listOfGObj.Add(gobj);
                 }
             }
 
@@ -367,6 +391,8 @@ public class CustomGridLayout : MonoBehaviour
         }
 
         Algorithm.text = "Algorithm : " + currentAlgo.ToString();
+
+        OnDrawDebugTiles();
     }
 
     public void ResetNodesCosts()

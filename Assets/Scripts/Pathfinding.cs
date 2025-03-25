@@ -96,6 +96,15 @@ public class Pathfinding : MonoBehaviour
         openSet = new List<Node>();
         closedSet = new HashSet<Node>();
 
+        // Making sure GCost of the start node is 0. Doing this because before the algorithm starts or algorithm changes, we reset all the cost values of nodes to float max.
+        // This is actually not part of algorithm, but doing this so that it works well according to my implementation.
+        startNode.GCost = 0f;
+
+        // A* uses additional heuristic called HCost, which is crucial to determine FCost. Making sure the HCost is calculated for start node before the FCost could be compared below with other nodes.
+        // Doing this because before the algorithm starts or algorithm changes, we reset all the cost values of nodes to float max.
+        // This is actually not part of algorithm, but doing this so that it works well according to my implementation.
+        startNode.HCost = GetDistanceBetweenNodes(startNode, destinationNode);
+
         // Add startNode to openSet
         openSet.Add(startNode);
 
@@ -170,6 +179,10 @@ public class Pathfinding : MonoBehaviour
         List<Node> pathNodeList = new List<Node>();
         openSet = new List<Node>();
         closedSet = new HashSet<Node>();
+
+        // Making sure GCost of the start node is 0. Doing this because before the algorithm starts or algorithm changes, we reset all the cost values of nodes to float max.
+        // This is actually not part of algorithm, but doing this so that it works well according to my implementation.
+        startNode.GCost = 0f;
 
         // Add start node to openSet
         openSet.Add(startNode);
