@@ -21,6 +21,16 @@ public class CustomGridLayout : MonoBehaviour
     [SerializeField] Pathfinding.Algorithm currentAlgo;
     Pathfinding.Algorithm previousAlgo;
     [SerializeField] TextMeshProUGUI Algorithm;
+    private Node startNode;
+    private Node destinationNode;
+    public void SetStartNode(CursorControl cc, Node sNode)
+    {
+        if (cc == cursorControl) startNode = sNode;
+    }
+    public void SetDestinationNode(CursorControl cc, Node dNode)
+    {
+        if (cc == cursorControl) destinationNode = dNode;
+    }
 
     [Header("Cursor Control")]
     [SerializeField] CursorControl cursorControl;
@@ -72,8 +82,11 @@ public class CustomGridLayout : MonoBehaviour
     [SerializeField] Material tileGreen;
     [SerializeField] Material tileBlack;
     [SerializeField] Material tileWhite;
+    [SerializeField] Material tileYellow;
+    [SerializeField] Material tileDarkGreen;
     [SerializeField] GameObject tileCubePrefab;
     [SerializeField] GameObject tileCubePrefabContainer;
+    List<GameObject> listOfTileCubeObj;
 
     void Awake()
     {
@@ -92,6 +105,8 @@ public class CustomGridLayout : MonoBehaviour
         path = new List<Node>();
         debugOpenList = new List<Node>();
         debugClosedList = new List<Node>();
+
+        listOfTileCubeObj = new List<GameObject>();
     }
 
     // Start is called once before the first execution of Update after the MonoBehaviour is created
@@ -124,6 +139,7 @@ public class CustomGridLayout : MonoBehaviour
     void Update()
     {
         SwitchAlgo();
+        UpdateDebugTiles();
     }
 
     void CreateGrid()
@@ -171,6 +187,8 @@ public class CustomGridLayout : MonoBehaviour
                 gridLayout[x, z] = new Node(isTraversable, worldPositionOfNode, new Vector2Int(x, z));
             }
         }
+
+        DrawDebugTiles();
     }
 
     void OnDrawGizmos()
@@ -249,48 +267,68 @@ public class CustomGridLayout : MonoBehaviour
     }
 
     // Kept this separate from OnDrawGizmos as Gizmos are only seen in editor view. Not in builds.
-    void OnDrawDebugTiles()
+    void DrawDebugTiles()
     {
         // Will make sure to draw only when this object is in the play mode.
         if (Application.IsPlaying(this))
         {
-            List<GameObject> listOfGObj = new List<GameObject>();
-
             // Draw the nodes within the grid layout
             if (gridLayout != null)
             {
                 foreach (Node n in gridLayout)
                 {
-                    GameObject gobj = GameObject.Instantiate(tileCubePrefab, n.PosInWorld, Quaternion.Euler(0f, 0f, 0f), tileCubePrefabContainer.transform);
+                    // Removed the unnecessary checks because this is just to instanstiate the debug tiles equal to the count of nodes in th grid. Hence no need for setting material here.
+                    listOfTileCubeObj.Add(Instantiate(tileCubePrefab, n.PosInWorld, Quaternion.Euler(0f, 0f, 0f), tileCubePrefabContainer.transform));
+                }
+            }
+        }
+    }
+
+    // Kept this separate from OnDrawGizmos as Gizmos are only seen in editor view. Not in builds.
+    void UpdateDebugTiles()
+    {
+        // Will make sure to draw only when this object is in the play mode.
+        if (Application.IsPlaying(this))
+        {
+            // Draw the nodes within the grid layout
+            if (gridLayout != null)
+            {
+                int iteratorCount = 0;
+
+                foreach (Node n in gridLayout)
+                {
 
                     if (!n.IsTraversable)
                     {
-                        gobj.transform.GetComponent<MeshRenderer>().material = tileRed;
+                        listOfTileCubeObj[iteratorCount].transform.GetComponent<MeshRenderer>().material = tileRed;
+                    }
+                    else if (startNode != null && startNode == n)
+                    {
+                        listOfTileCubeObj[iteratorCount].transform.GetComponent<MeshRenderer>().material = tileYellow;
+                    }
+                    else if (destinationNode != null && destinationNode == n)
+                    {
+                        listOfTileCubeObj[iteratorCount].transform.GetComponent<MeshRenderer>().material = tileGreen;
                     }
                     else if (path.Count > 0 && path.Contains(n))
                     {
-                        gobj.transform.GetComponent<MeshRenderer>().material = tileGreen;
+                        listOfTileCubeObj[iteratorCount].transform.GetComponent<MeshRenderer>().material = tileDarkGreen;
                     }
                     else if (debugClosedList.Count > 0 && debugClosedList.Contains(n))
                     {
-                        gobj.transform.GetComponent<MeshRenderer>().material = tileBlack;
+                        listOfTileCubeObj[iteratorCount].transform.GetComponent<MeshRenderer>().material = tileBlack;
                     }
                     else if (debugOpenList.Count > 0 && debugOpenList.Contains(n))
                     {
-                        gobj.transform.GetComponent<MeshRenderer>().material = tileBlue;
+                        listOfTileCubeObj[iteratorCount].transform.GetComponent<MeshRenderer>().material = tileBlue;
                     }
                     else
                     {
-                        gobj.transform.GetComponent<MeshRenderer>().material = tileWhite;
+                        listOfTileCubeObj[iteratorCount].transform.GetComponent<MeshRenderer>().material = tileWhite;
                     }
 
-                    listOfGObj.Add(gobj);
+                    iteratorCount++;
                 }
-            }
-
-            foreach (GameObject gobj in listOfGObj)
-            {
-                Destroy(gobj);
             }
         }
     }
@@ -391,8 +429,6 @@ public class CustomGridLayout : MonoBehaviour
         }
 
         Algorithm.text = "Algorithm : " + currentAlgo.ToString();
-
-        OnDrawDebugTiles();
     }
 
     public void ResetNodesCosts()

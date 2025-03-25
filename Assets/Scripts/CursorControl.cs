@@ -1,4 +1,5 @@
 using UnityEngine;
+using TMPro;
 
 public class CursorControl : MonoBehaviour
 {
@@ -19,6 +20,8 @@ public class CursorControl : MonoBehaviour
     [SerializeField] Vector2Int startNodeCoords;
     [SerializeField] Vector2Int destinationNodeCoords;
     [SerializeField] bool canPathFindingBeTriggered;
+    [SerializeField] TextMeshProUGUI StartNode;
+    [SerializeField] TextMeshProUGUI DestinationNode;
     public bool CanPathFindingBeTriggered { get { return canPathFindingBeTriggered; } set { canPathFindingBeTriggered = value; } }
 
     public bool IsCursorVisible { get { return isCursorVisible; } }
@@ -83,6 +86,11 @@ public class CursorControl : MonoBehaviour
                     destinationNodeCoords = Vector2Int.zero;
                 }
             }
+
+            StartNode.text = "Start Node : " + startNodeCoords.ToString();
+            DestinationNode.text = "Destination Node : " + destinationNodeCoords.ToString();
+            customGridLayout.SetStartNode(this, startNode);
+            customGridLayout.SetDestinationNode(this, destinationNode);
         }
     }
 
